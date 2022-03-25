@@ -135,9 +135,14 @@ class MusicBERTSentencePredictionMultilabelCriterion(SentencePredictionCriterion
         sample (dict) - the mini-batch. The format is defined by the FairseqDataset.
         我还没确认这里 sample["target"] 具体什么格式
         '''
-        targets = F.one_hot(targets.long(), num_classes=logits.size()[-1]+4) # num_classes是？
+        # (4,13) = (max_sentence * num_classes)
+        # row: [4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 4 for label, 1 for pad
+        targets = F.one_hot(targets.long(), num_classes=logits.size()[-1]+4)
+        # (4, 13, 17), 4 for sentences, 13 for num_classes, 17 for num_classes +4, +4 for pad and other tokens.
         targets = targets.sum(dim=1)
+        # (4, 17), [ 0, 12,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0]
         targets = targets[:, 4:]
+        # (4, 13), [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         loss = F.binary_cross_entropy_with_logits(
             logits, targets.float(), reduction='sum')
         sample_size = logits.size()[0]
@@ -341,6 +346,7 @@ class MusicBERTEncoder(RobertaEncoder):
             q_noise=args.quant_noise_pq,
             qn_block_size=args.quant_noise_pq_block_size,
         )
+        print("fuck")
 
 
 @register_model("musicbert")
@@ -487,5 +493,6 @@ class OctupleTokenDataset(PrependTokenDataset):
 
 
 fairseq.tasks.sentence_prediction.PrependTokenDataset = OctupleTokenDataset
+fairseq.tasks.translation.PrependTokenDataset = OctupleTokenDataset #新增
 fairseq.tasks.masked_lm.PrependTokenDataset = OctupleTokenDataset
 fairseq.tasks.masked_lm.MaskTokensDataset = OctupleMaskTokensDataset
