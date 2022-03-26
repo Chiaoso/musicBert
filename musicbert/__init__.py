@@ -346,7 +346,6 @@ class MusicBERTEncoder(RobertaEncoder):
             q_noise=args.quant_noise_pq,
             qn_block_size=args.quant_noise_pq_block_size,
         )
-        print("fuck")
 
 
 @register_model("musicbert")

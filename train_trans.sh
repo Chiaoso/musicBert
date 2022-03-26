@@ -10,7 +10,7 @@ BATCH_SIZE=64
 MAX_SENTENCES=1
 MUSICBERT_PATH=checkpoints/checkpoint_last_musicbert_small.pt
 
-CUDA_VISIBLE_DEVICES=0 fairseq-train trans_data_bin/0 --user-dir musicbert \
+CUDA_VISIBLE_DEVICES=0 fairseq-train trans_data_bin/tokenized.txt-label --user-dir musicbert \
     --restore-file $MUSICBERT_PATH \
     --max-update $TOTAL_NUM_UPDATES \
     --batch-size $MAX_SENTENCES \
