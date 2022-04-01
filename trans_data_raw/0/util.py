@@ -1,5 +1,5 @@
-with open('train.label', 'r') as f:
-    line = f.readline()
-    print(len(line.split()))
-    line = f.readline()
-    print(len(line.split()))
+with open('train.txt', 'r') as f:
+    for j in range(4):
+        line = f.readline()
+        line = line.split()
+        print(len(line))

@@ -21,6 +21,8 @@ MIDI in zip -> (train.id, train.text, train.label)-> binary
 label format: to be determined
 '''
 
+from turtle import forward
+from fairseq.checkpoint_utils import load_pretrained_component_from_model
 import fairseq.tasks.sentence_prediction
 import fairseq.tasks.masked_lm
 from fairseq import metrics
@@ -98,10 +100,15 @@ class MusicBERTSentencePredictionMultilabelTask(SentencePredictionTask):
                 labels.append(label)
                 label_lengths.append(len(label))
         assert len(src_dataset) == len(labels)
+        print("ACR for dictionary")
+        print(len(self.source_dictionary))
+        print(len(self.label_dictionary))
+        for i in range(22):
+            print(self.label_dictionary[i])
         self.datasets[split] = LanguagePairDataset(
             src=src_dataset,
             src_sizes=src_dataset.sizes,
-            src_dict=self.label_dictionary,
+            src_dict=self.source_dictionary,
             tgt=labels,
             tgt_sizes=torch.tensor(label_lengths),
             tgt_dict=self.label_dictionary,
@@ -124,25 +131,38 @@ class MusicBERTSentencePredictionMultilabelCriterion(SentencePredictionCriterion
             features_only=True,
             classification_head_name=self.classification_head_name, #不重要
         )
+        """
+        Args:
+            src_tokens (LongTensor): input tokens of shape `(batch, src_len)`
+            features_only (bool, optional): skip LM head and just return
+                features. If True, the output will be of shape
+                `(batch, src_len, embed_dim)`.
+
+        Returns:
+            tuple:
+                - the LM output of shape `(batch, src_len, vocab)`
+                - a dictionary of additional data, where 'inner_states'
+                  is a list of hidden states. Note that the hidden
+                  states have shape `(src_len, batch, vocab)`.
+        """
+        #logits: [1, 256]
+        print("ACR for spm")
         targets = model.get_targets(sample, [logits])
-        '''
-        fairseq 的 源码:
-        class BaseFairseqModel(nn.Module):
-          def get_targets(self, sample, net_output):
-           """Get targets from either the sample or the net's output."""
-           return sample["target"]
-        关于sample则:
-        sample (dict) - the mini-batch. The format is defined by the FairseqDataset.
-        我还没确认这里 sample["target"] 具体什么格式
-        '''
-        # (4,13) = (max_sentence * num_classes)
+        # print(logits.shape)
+        # print(logits)
+        # print(targets.shape)
+        # print(targets)
+        # exit()
+        # targets: [1,256]
+
+        # [4,13] = (max_sentence * num_classes)
         # row: [4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 4 for label, 1 for pad
         targets = F.one_hot(targets.long(), num_classes=logits.size()[-1]+4)
-        # (4, 13, 17), 4 for sentences, 13 for num_classes, 17 for num_classes +4, +4 for pad and other tokens.
+        # [4, 13, 17], 4 for sentences, 13 for num_classes, 17 for num_classes +4, +4 for pad and other tokens.
         targets = targets.sum(dim=1)
-        # (4, 17), [ 0, 12,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0]
+        # [4, 17], [ 0, 12,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0]
         targets = targets[:, 4:]
-        # (4, 13), [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        # [4, 13], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         loss = F.binary_cross_entropy_with_logits(
             logits, targets.float(), reduction='sum')
         sample_size = logits.size()[0]
@@ -327,6 +347,7 @@ class OctupleEncoder(TransformerSentenceEncoder):
 class MusicBERTEncoder(RobertaEncoder):
     def __init__(self, args, dictionary):
         super().__init__(args, dictionary)
+
         self.sentence_encoder = OctupleEncoder(
             padding_idx=dictionary.pad(),
             vocab_size=len(dictionary),
@@ -358,7 +379,9 @@ class MusicBERTModel(RobertaModel):
             # max_positions: max sentence length supported by the model
             # tokens_per_sample: 基本和 max_positions 一码事
         encoder = MusicBERTEncoder(args, task.source_dictionary)
-        return cls(args, encoder)
+        encoder = load_pretrained_component_from_model(encoder, "checkpoints/checkpoint_last_musicbert_small.pt")
+        model = cls(args, encoder)
+        return model
 
 
 @register_model_architecture("musicbert", "musicbert")
