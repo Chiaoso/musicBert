@@ -103,8 +103,8 @@ class MusicBERTSentencePredictionMultilabelTask(SentencePredictionTask):
         print("ACR for dictionary")
         print(len(self.source_dictionary))
         print(len(self.label_dictionary))
-        for i in range(22):
-            print(self.label_dictionary[i])
+        # for i in range(22):
+        #     print(self.label_dictionary[i])
         self.datasets[split] = LanguagePairDataset(
             src=src_dataset,
             src_sizes=src_dataset.sizes,
@@ -294,6 +294,7 @@ class OctupleEncoder(TransformerSentenceEncoder):
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         ratio = 1 if disable_cp else 8
         if not disable_cp:
+            print(tokens)
             assert tokens.shape[1] % ratio == 0, 'token sequences length should be multiple of ' + str(
                 ratio) + ' for compound mode'
             assert last_state_only, 'hidden states not available for compound mode'
