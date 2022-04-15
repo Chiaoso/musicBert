@@ -6,8 +6,8 @@ WARMUP_UPDATES=4000
 PEAK_LR=0.00005
 TOKENS_PER_SAMPLE=8192
 MAX_POSITIONS=8192
-BATCH_SIZE=64
-MAX_SENTENCES=4
+BATCH_SIZE=1
+MAX_SENTENCES=1
 N_GPU_LOCAL=0 #$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
 UPDATE_FREQ=1 #$((${BATCH_SIZE} / ${MAX_SENTENCES} / ${N_GPU_LOCAL}))
 if [ -z ${1+x} ]; then echo "subset not set" && exit 1; else echo "subset = $1"; fi

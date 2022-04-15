@@ -2,3 +2,7 @@ topmagd_data_bin filter=lfs diff=lfs merge=lfs -text
 topmagd_data_raw filter=lfs diff=lfs merge=lfs -text
 checkpoints filter=lfs diff=lfs merge=lfs -text
 checkpoints/checkpoint_last_musicbert_small.pt filter=lfs diff=lfs merge=lfs -text
+embed_positions.pt filter=lfs diff=lfs merge=lfs -text
+embed_tokens.pt filter=lfs diff=lfs merge=lfs -text
+embed_tokens.txt filter=lfs diff=lfs merge=lfs -text
+checkpoints/checkpoint_last_musicbert_base.pt filter=lfs diff=lfs merge=lfs -text

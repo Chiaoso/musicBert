@@ -12,7 +12,5 @@ fairseq-preprocess \
     --destdir ${PREFIX}_data_bin/tokenized.txt-label \
     --srcdict ${PREFIX}_data_raw/0/dict.txt \
     --workers 24
-    --padding-factor 8
-
 
 

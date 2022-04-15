@@ -21,6 +21,7 @@ MIDI in zip -> (train.id, train.text, train.label)-> binary
 label format: to be determined
 '''
 
+from tqdm import tqdm
 from turtle import forward
 from fairseq.checkpoint_utils import load_pretrained_component_from_model
 import fairseq.tasks.sentence_prediction
@@ -101,6 +102,9 @@ class MusicBERTSentencePredictionMultilabelTask(SentencePredictionTask):
                 label_lengths.append(len(label))
         assert len(src_dataset) == len(labels)
         print("ACR for dictionary")
+        with open("embed_dict.txt", 'w') as f:
+            for word in self.source_dictionary.indices.keys():
+                f.write(f'{word} ')
         print(len(self.source_dictionary))
         print(len(self.label_dictionary))
         # for i in range(22):
@@ -148,11 +152,7 @@ class MusicBERTSentencePredictionMultilabelCriterion(SentencePredictionCriterion
         #logits: [1, 256]
         print("ACR for spm")
         targets = model.get_targets(sample, [logits])
-        # print(logits.shape)
-        # print(logits)
-        # print(targets.shape)
-        # print(targets)
-        # exit()
+
         # targets: [1,256]
 
         # [4,13] = (max_sentence * num_classes)
@@ -221,7 +221,6 @@ class MusicBERTSentencePredictionMultilabelCriterion(SentencePredictionCriterion
     def logging_outputs_can_be_summed() -> bool:
         return False
 
-# 不用管, 是预训练部分的。
 class OctupleMaskTokensDataset(MaskTokensDataset):
     @lru_cache(maxsize=8)
     def __getitem__(self, index: int):
@@ -272,12 +271,20 @@ class OctupleMaskTokensDataset(MaskTokensDataset):
             masked_item[set_mask] = self.mask_idx
             return torch.from_numpy(masked_item)
 
-# 不用管, 是encoder部分的。
+def write_embedding_file(path, embeddings, dict):
+    with open(path, 'w') as f:
+        for i, embedding in enumerate(tqdm(embeddings)):
+            word = dict[i]
+            vector = ' '.join([str(i) for i in embedding.tolist()])
+            f.write(f'{word} {vector}\n')
+
 class OctupleEncoder(TransformerSentenceEncoder):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.tpu = False
         embedding_dim = kwargs['embedding_dim']
+        # np.save("/Users/goodgame/course/CSCI4998/musicBert/musicBert/checkpoints ",embedding_dim)
+        # exit()
         if not disable_cp:
             self.downsampling = nn.Sequential(
                 nn.Linear(embedding_dim * 8, embedding_dim))
@@ -294,7 +301,6 @@ class OctupleEncoder(TransformerSentenceEncoder):
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         ratio = 1 if disable_cp else 8
         if not disable_cp:
-            print(tokens)
             assert tokens.shape[1] % ratio == 0, 'token sequences length should be multiple of ' + str(
                 ratio) + ' for compound mode'
             assert last_state_only, 'hidden states not available for compound mode'
@@ -307,7 +313,20 @@ class OctupleEncoder(TransformerSentenceEncoder):
         if token_embeddings is not None:
             x = token_embeddings
         else:
+            # with open("/Users/goodgame/course/CSCI4998/musicBert/musicBert/trans_data_raw/0/dict.txt") as f:
+            #     lines = f.readlines()
+            #     d = []
+            #     for line in lines:
+            #         d.append(line.split()[0])
+            #     write_embedding_file("embed_tokens.txt", self.embed_tokens.weight.data, d)
+
+            d = []
+            with open("embed_dict.txt", 'r') as f:
+                d = f.readline().split()
+                write_embedding_file("embed_tokens.txt", self.embed_tokens.weight.data, d)
+            exit()
             x = self.embed_tokens(tokens)
+
         if not disable_cp:
             x = self.downsampling(x.view(x.shape[0], x.shape[1] // ratio, -1))
         if self.embed_scale is not None:
@@ -380,10 +399,9 @@ class MusicBERTModel(RobertaModel):
             # max_positions: max sentence length supported by the model
             # tokens_per_sample: 基本和 max_positions 一码事
         encoder = MusicBERTEncoder(args, task.source_dictionary)
-        encoder = load_pretrained_component_from_model(encoder, "checkpoints/checkpoint_last_musicbert_small.pt")
+        # encoder = load_pretrained_component_from_model(encoder, "checkpoints/checkpoint_last_musicbert_base.pt")
         model = cls(args, encoder)
         return model
-
 
 @register_model_architecture("musicbert", "musicbert")
 def base_architecture(args):
@@ -516,6 +534,7 @@ class OctupleTokenDataset(PrependTokenDataset):
 
 
 fairseq.tasks.sentence_prediction.PrependTokenDataset = OctupleTokenDataset
-fairseq.tasks.translation.PrependTokenDataset = OctupleTokenDataset #新增
 fairseq.tasks.masked_lm.PrependTokenDataset = OctupleTokenDataset
 fairseq.tasks.masked_lm.MaskTokensDataset = OctupleMaskTokensDataset
+
+# model = 
