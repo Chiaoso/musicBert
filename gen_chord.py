@@ -15,11 +15,11 @@ import preprocess
 import json
 from sklearn.model_selection import StratifiedKFold
 
-raw_data_dir = 'chord_data/gen'
+raw_data_dir = 'trans_data_raw/gen'
 if os.path.exists(raw_data_dir):
     print('Output path {} already exists!'.format(raw_data_dir))
     sys.exit(0)
-data_path = 'chord_data/midi.zip'
+data_path = 'trans_data_raw/midi.zip'
 # n_folds = 5
 # n_times = 4  # sample train set multiple times
 max_length = int(input('sequence length: '))
@@ -35,7 +35,7 @@ pool_num = 24
 # labels = {'id': ['chord_1', 'chord_2']}
 labels = dict()
 
-with open('chord_data/labels') as f:
+with open('trans_data_raw/labels') as f:
     for line in f:
         line = line.strip()
         strs = line.split('|')
