@@ -1,3 +1,4 @@
+MAX_TOKENS=20000
 export OMP_NUM_THREADS=1
 
 CUDA_VISIBLE_DEVICES=0 fairseq-train \
@@ -13,9 +14,10 @@ CUDA_VISIBLE_DEVICES=0 fairseq-train \
     --eval-bleu-remove-bpe \
     --eval-bleu-print-samples \
     --best-checkpoint-metric bleu --maximize-best-checkpoint-metric\
-    --max-source-positions 20000 \
-    --max-target-positions 20000 \
-    --max-tokens 20000 \
+    --max-source-positions $MAX_TOKENS \
+    --max-target-positions $MAX_TOKENS \
+    --max-tokens $MAX_TOKENS \
+    --max-tokens-valid $MAX_TOKENS \
     --encoder-embed-path embed_tokens.txt \
     --encoder-embed-dim 768
 
