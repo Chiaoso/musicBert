@@ -9,7 +9,7 @@ CUDA_VISIBLE_DEVICES=0 fairseq-train \
     --dropout 0.3 --weight-decay 0.0001 \
     --criterion label_smoothed_cross_entropy --label-smoothing 0.1 \
     --eval-bleu \
-    --eval-bleu-args '{"beam": 5, "max_len_a": 1.2, "max_len_b": 10}' \
+    --eval-bleu-args '{"beam": 1, "max_len_a": 1.2, "max_len_b": 10}' \
     --eval-bleu-detok moses \
     --eval-bleu-remove-bpe \
     --eval-bleu-print-samples \
@@ -19,5 +19,7 @@ CUDA_VISIBLE_DEVICES=0 fairseq-train \
     --max-tokens $MAX_TOKENS \
     --max-tokens-valid $MAX_TOKENS \
     --encoder-embed-path embed_tokens.txt \
-    --encoder-embed-dim 768
+    --encoder-embed-dim 768 \
+    --validate-interval 10 \
+    --max-epoch 50
 
