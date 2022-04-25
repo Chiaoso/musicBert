@@ -13,9 +13,9 @@ CUDA_VISIBLE_DEVICES=0 fairseq-train \
     --eval-bleu-remove-bpe \
     --eval-bleu-print-samples \
     --best-checkpoint-metric bleu --maximize-best-checkpoint-metric\
-    --max-source-positions 20000 \
-    --max-target-positions 20000 \
-    --max-tokens 20000 \
+    --max-source-positions 14000 \
+    --max-target-positions 3000 \
+    --max-tokens 14000 \
     --encoder-embed-path embed_tokens.txt \
     --encoder-embed-dim 768
 
